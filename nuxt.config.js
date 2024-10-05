@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: "3-min-invest",
