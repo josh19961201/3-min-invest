@@ -36,7 +36,4 @@ export default {
   build: {
     // 若需要進一步的自定義，可以在這裡添加
   },
-  buildDir: "dist",
-  // 加入 target 設定
-  target: "static", // 將此行添加到設定中
 };
