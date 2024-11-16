@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full flex flex-col justify-center items-center gap-6 p-8 lg:p-12 text-base"
+    class="w-full min-h-screen flex flex-col items-center gap-6 p-8 lg:p-12 text-base"
   >
     <h2 class="text-3xl text-center font-bold">美股ETF定期定額投資計算器</h2>
     <!-- 說明 -->
@@ -38,13 +38,11 @@
             <h3 class="text-lg whitespace-nowrap">選擇ETF</h3>
 
             <select
-              class="block w-full border pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md"
+              class="block w-full border px-3 py-3 text-base border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md"
+              v-model="calcInput.selectedETF"
             >
-              <option
-                v-for="etf in etfDataList"
-                :key="etf.value"
-                :value="etf.value"
-              >
+              <option :value="null" selected>選擇您想投資的ETF</option>
+              <option v-for="etf in etfDataList" :key="etf.value" :value="etf">
                 {{ etf.label }}
               </option>
             </select>
@@ -56,6 +54,8 @@
               <input
                 class="block w-full border p-3 text-base border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md"
                 type="number"
+                v-model="calcInput.monthlyInvestment"
+                min="0"
               />
             </div>
 
@@ -64,11 +64,14 @@
               <input
                 class="block w-full border p-3 text-base border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md"
                 type="number"
+                v-model="calcInput.investmentPeriod"
+                min="0"
               />
             </div>
           </div>
           <button
             class="bg-gray-800 text-white rounded-md py-3 text-lg font-semibold hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600"
+            @click="submit"
           >
             計算
           </button>
@@ -88,23 +91,37 @@
         >
           <div class="flex w-full h-full items-center justify-between px-6">
             <dt class="flex items-center">選擇的ETF</dt>
-            <dd class="flex items-center">123</dd>
+            <dd class="flex items-center">
+              <span v-if="result.selectedETF">{{ result.selectedETF }}</span>
+            </dd>
           </div>
           <div class="flex w-full h-full items-center justify-between px-6">
             <dt class="flex items-center">投資總額</dt>
-            <dd class="flex items-center">123</dd>
+            <dd class="flex items-center">
+              <span v-if="result.totalInvested"
+                >$ {{ result.totalInvested }}</span
+              >
+            </dd>
           </div>
           <div class="flex w-full h-full items-center justify-between px-6">
             <dt class="flex items-center">預估收益</dt>
-            <dd class="flex items-center">123</dd>
+            <dd class="flex items-center">
+              <span v-if="result.interestEarned"
+                >$ {{ result.interestEarned }}</span
+              >
+            </dd>
           </div>
           <div class="flex w-full h-full items-center justify-between px-6">
             <dt class="flex items-center">最終金額</dt>
-            <dd class="flex items-center">123</dd>
+            <dd class="flex items-center">
+              <span v-if="result.futureValue">$ {{ result.futureValue }}</span>
+            </dd>
           </div>
           <div class="flex w-full h-full items-center justify-between px-6">
             <dt class="flex items-center">年化報酬率</dt>
-            <dd class="flex items-center">123</dd>
+            <dd class="flex items-center">
+              <span v-if="result.annualReturn">{{ result.annualReturn }}</span>
+            </dd>
           </div>
         </dl>
       </div>
@@ -156,9 +173,11 @@
             <td class="whitespace-nowrap px-4 py-3">
               {{ etf.label }}
             </td>
-            <td class="whitespace-nowrap px-4 py-3">{{ etf.expenseRatio }}%</td>
             <td class="whitespace-nowrap px-4 py-3">
-              {{ etf.annualizedReturnRate }}%
+              {{ (etf.expense * 100).toFixed(2) + '%' }}
+            </td>
+            <td class="whitespace-nowrap px-4 py-3">
+              {{ (etf.annualReturn * 100).toFixed(2) + '%' }}
             </td>
           </tr>
         </tbody>
@@ -173,44 +192,93 @@ const etfDataList = ref([
   {
     value: 'VT',
     label: 'Vanguard Total World Stock ETF（全球股票市場指數）',
-    expenseRatio: 0.07,
-    annualizedReturnRate: 9.43
+    annualReturn: 0.0943,
+    expense: 0.0007
   },
   {
     value: 'VTI',
     label: 'Vanguard Total Stock Market ETF（全美國股市指數）',
-    expenseRatio: 0.03,
-    annualizedReturnRate: 10.23
+    annualReturn: 0.1023,
+    expense: 0.0003
   },
   {
     value: 'VOO',
     label: 'Vanguard S&P 500 ETF（追蹤標準普爾500指數）',
-    expenseRatio: 0.03,
-    annualizedReturnRate: 11.31
+    annualReturn: 0.1131,
+    expense: 0.0003
   },
   {
     value: 'VIG',
     label: '	Vanguard Dividend Appreciation ETF（股息增長指數）',
-    expenseRatio: 0.06,
-    annualizedReturnRate: 9.72
+    annualReturn: 0.0972,
+    expense: 0.0006
   },
   {
     value: 'QQQ',
     label: 'Invesco QQQ Trust（納斯達克科技股指數）',
-    expenseRatio: 0.2,
-    annualizedReturnRate: 15.68
+    annualReturn: 0.1568,
+    expense: 0.002
   },
   {
     value: 'SMH',
     label: 'VanEck Semiconductor ETF（追蹤半導體產業）',
-    expenseRatio: 0.35,
-    annualizedReturnRate: 17.23
+    annualReturn: 0.1723,
+    expense: 0.0035
   },
   {
     value: 'AOA',
     label: 'iShares Core Aggressive Allocation ETF（積極股債配置）',
-    expenseRatio: 0.15,
-    annualizedReturnRate: 9.12
+    annualReturn: 0.0912,
+    expense: 0.0015
   }
 ])
+const calcInput = reactive({
+  monthlyInvestment: 0,
+  investmentPeriod: 0,
+  selectedETF: null
+})
+const result = reactive({
+  selectedETF: null,
+  totalInvested: '',
+  interestEarned: '',
+  futureValue: '',
+  annualReturn: ''
+})
+
+function submit() {
+  // 驗證
+  if (!calcInput.monthlyInvestment) {
+    alert('請輸入每月投資金額')
+    return
+  }
+  if (!calcInput.investmentPeriod) {
+    alert('請輸入投資期間')
+    return
+  }
+  if (!calcInput.selectedETF) {
+    alert('請選擇ETF')
+    return
+  }
+  const monthlyInvestment = calcInput.monthlyInvestment
+  const investmentPeriod = calcInput.investmentPeriod
+  const selectedETF = calcInput.selectedETF
+
+  const annualReturn = selectedETF.annualReturn - selectedETF.expense
+  const monthlyRate = annualReturn / 12
+  const totalMonths = investmentPeriod * 12
+
+  const futureValue =
+    monthlyInvestment *
+    ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) *
+    (1 + monthlyRate)
+
+  const totalInvested = monthlyInvestment * totalMonths
+  const interestEarned = futureValue - totalInvested
+
+  result.selectedETF = selectedETF.value
+  result.totalInvested = Math.round(totalInvested).toLocaleString()
+  result.interestEarned = Math.round(interestEarned).toLocaleString()
+  result.futureValue = Math.round(futureValue).toLocaleString()
+  result.annualReturn = (annualReturn * 100).toFixed(2)
+}
 </script>
