@@ -15,5 +15,10 @@ export default defineNuxtConfig({
     preference: 'light'
   },
 
+  ui: {
+    primary: 'amber',
+    gray: 'gray'
+  },
+
   modules: ['@nuxt/ui']
 })

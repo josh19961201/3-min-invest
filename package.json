@@ -12,6 +12,7 @@
   "dependencies": {
     "@nuxt/ui": "^2.19.2",
     "nuxt": "^3.13.2",
+    "resend": "^4.1.2",
     "vue": "latest",
     "vue-router": "latest"
   },
